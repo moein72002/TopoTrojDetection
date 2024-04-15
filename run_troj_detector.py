@@ -100,7 +100,7 @@ def main(args):
         try:
             model_file_path = model_file_path
             model = resnet18(num_classes=10)
-            model.load_state_dict(torch.load(model_file_path)).to(device)
+            model.load_state_dict(torch.load(model_file_path)["model"]).to(device)
         except:
             print("Model {} .pt file is missing, skip to next model".format(model_file_path))
             continue
