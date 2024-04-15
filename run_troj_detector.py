@@ -100,14 +100,14 @@ def main(args):
             model_file_path = model_file_path
             model = torch.load(model_file_path).to(device)
         except:
-            print("Model {} .pt file is missing, skip to next model".format(model_name))
+            print("Model {} .pt file is missing, skip to next model".format(model_file_path))
             continue
         model.eval()
 
         try:
             model_config = jsonpickle.decode(open(model_config_path, "r").read())
         except:
-            print("Model {} config is missing, skip to next model".format(model_config))
+            print("Model {} config is missing, skip to next model".format(model_config_path))
             continue
 
         if gt_file:
