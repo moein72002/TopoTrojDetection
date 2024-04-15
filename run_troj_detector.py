@@ -146,7 +146,7 @@ def main(args):
                     break
 
         model_file_path_prefix = '/'.join(model_file_path.split('/')[:-1])
-        save_file_path = os.path.join(model_file_path_prefix, 'test_extracted_psf_topo_feature.pkl')
+        save_file_path = os.path.join(model_file_path_prefix, f'{model_file_path[:-3]}_topo_features.pkl')
         fv = topo_psf_feature_extract(model, img_c, psf_config)
         with open(save_file_path, 'wb') as f:
             pkl.dump(fv, f)
