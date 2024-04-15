@@ -42,7 +42,6 @@ TRAIN_TEST_SPLIT: float = 0.8  # Ratio of train to test
 
 
 def main(args):
-    from trojai import modelgen
 
     seed = args.seed
     random.seed(seed)
