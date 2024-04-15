@@ -26,6 +26,7 @@ import glob
 
 from topological_feature_extractor import topo_psf_feature_extract
 from run_crossval import run_crossval_xgb, run_crossval_mlp
+from torchvision.models.resnet import resnet18
 
 # Algorithm Configuration
 STEP_SIZE:  int = 2 # Stimulation stepsize used in PSF
@@ -98,7 +99,8 @@ def main(args):
 
         try:
             model_file_path = model_file_path
-            model = torch.load(model_file_path).to(device)
+            model = resnet18(num_classes=10)
+            model.load_state_dict(torch.load(model_file_path)).to(device)
         except:
             print("Model {} .pt file is missing, skip to next model".format(model_file_path))
             continue
