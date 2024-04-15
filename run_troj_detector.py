@@ -85,7 +85,7 @@ def main(args):
         for root_m, dirnames, filenames in os.walk(os.path.join(root, model_name)):
             for filename in filenames:
                 print(f"filename: {filename}")
-                if filename.endswith('.pt.1'):
+                if filename.endswith('.pt'):
                     model_file_path = os.path.join(root_m, filename)
                 if filename.endswith('gt.txt'):
                     gt_file = os.path.join(root_m, gt_file)
@@ -110,7 +110,9 @@ def main(args):
             print("Model {} config is missing, skip to next model".format(model_config_path))
             continue
 
-        if gt_file:
+        if args.gt_by_model_file_name:
+            gt = ('target' in os.path.basename(model_file_path))
+        elif gt_file:
             with open(args.gt_file, "w") as f:
                 gt = int(f.readlines().strip())
         else:
@@ -289,6 +291,7 @@ if __name__ == '__main__':
     parser.add_argument('--log_path', type=str, help='Output log save dir', default='./tmp')
     parser.add_argument('--gpu_ind', type=str, help='Indices of GPUs to be used', default='0')
     parser.add_argument('--seed', type=int, help="Experiment random seed", default=123)
+    parser.add_argument('--gt_by_model_file_name', type=bool, help="If true gt will be specified by model file name", default=False)
     args = parser.parse_args()
 
     exp_logfile=date.today().strftime("%d-%m-%Y")+f'{CORR_METRIC}_{CLASSIFIER}_{N_SAMPLE_NEURONS}_{STEP_SIZE}_{STIM_LEVEL}_{PATCH_SIZE}.json'
