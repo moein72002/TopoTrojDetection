@@ -84,6 +84,7 @@ def main(args):
 
         for root_m, dirnames, filenames in os.walk(os.path.join(root, model_name)):
             for filename in filenames:
+                print(f"filename: {filename}")
                 if filename.endswith('.pt.1'):
                     model_file_path = os.path.join(root_m, filename)
                 if filename.endswith('gt.txt'):
