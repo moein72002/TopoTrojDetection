@@ -23,6 +23,7 @@ import pickle as pkl
 from datetime import date
 from tqdm import tqdm
 import glob
+import traceback
 
 from topological_feature_extractor import topo_psf_feature_extract
 from run_crossval import run_crossval_xgb, run_crossval_mlp
@@ -102,8 +103,9 @@ def main(args):
             model = resnet18(num_classes=10)
             model.load_state_dict(torch.load(model_file_path)["model"]).to(device)
         except:
-            print("Model {} .pt file is missing, skip to next model".format(model_file_path))
-            continue
+            print("Model {} file is missing, skip to next model".format(model_file_path))
+            traceback.print_exc()
+            # continue
         model.eval()
 
         try:
