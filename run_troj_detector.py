@@ -11,6 +11,7 @@ import jsonpickle
 from collections import defaultdict
 from typing import List
 
+from trojai import modelgen
 import torch
 import numpy as np
 import pandas as pd
