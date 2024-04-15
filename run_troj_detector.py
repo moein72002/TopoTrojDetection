@@ -38,7 +38,7 @@ USE_EXAMPLE: bool =  False     # Whether clean inputs will be given or not
 CORR_METRIC: str = 'distcorr'   # Correlation metric to be used
 CLASSIFIER: str  = 'xgboost'    # Classifier for the detection , choice = {xgboost, mlp}.
 # Experiment Configuration
-INPUT_SIZE: List = [1, 28, 28] # Input images' shape (default to be MNIST)
+INPUT_SIZE: List = [3, 32, 32] # Input images' shape (default to be CIFAR10)
 INPUT_RANGE: List = [0, 255]   # Input image range
 TRAIN_TEST_SPLIT: float = 0.8  # Ratio of train to test
 
