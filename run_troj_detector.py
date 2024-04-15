@@ -96,12 +96,12 @@ def main(args):
             if len(model_file_path) and len(model_config_path) and model_train_example_config:
                 break
 
-        # try:
-        model_file_path = model_file_path
-        model = torch.load(model_file_path).to(device)
-        # except:
-        #     print("Model {} .pt file is missing, skip to next model".format(model_file_path))
-        #     continue
+        try:
+            model_file_path = model_file_path
+            model = torch.load(model_file_path).to(device)
+        except:
+            print("Model {} .pt file is missing, skip to next model".format(model_file_path))
+            continue
         model.eval()
 
         try:
