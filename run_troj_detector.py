@@ -65,7 +65,9 @@ def main(args):
     psf_config['device'] = device
 
     root = args.data_root
+    print(f"root: {root}")
     model_list = sorted(os.listdir(root))
+    print(f"model_list: {model_list}")
 
     # --------------------------------- Step I: Feature Extraction ---------------------------------
     print(">>> Step I: Feature Extraction <<<")
