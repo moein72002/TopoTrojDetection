@@ -84,19 +84,20 @@ def main(args):
         model_train_example_config = None
         gt_file = None
 
-        for root_m, dirnames, filenames in os.walk(os.path.join(root, model_name)):
-            for filename in filenames:
-                print(f"filename: {filename}")
-                if filename.endswith('.pt'):
-                    model_file_path = os.path.join(root_m, filename)
-                if filename.endswith('gt.txt'):
-                    gt_file = os.path.join(root_m, gt_file)
-                if filename.endswith('.json'):
-                    model_config_path = os.path.join(root_m, filename)
-                if filename.endswith('experiment_train.csv'):
-                    model_train_example_config = os.path.join(root_m, filename)
-            if len(model_file_path) and len(model_config_path) and model_train_example_config:
-                break
+        # for root_m, dirnames, filenames in os.walk(os.path.join(root, model_name)):
+        #     for filename in filenames:
+        #         print(f"filename: {filename}")
+        #         if filename.endswith('.pt'):
+        #             model_file_path = os.path.join(root_m, filename)
+        #         if filename.endswith('gt.txt'):
+        #             gt_file = os.path.join(root_m, gt_file)
+        #         if filename.endswith('.json'):
+        #             model_config_path = os.path.join(root_m, filename)
+        #         if filename.endswith('experiment_train.csv'):
+        #             model_train_example_config = os.path.join(root_m, filename)
+        #     if len(model_file_path) and len(model_config_path) and model_train_example_config:
+        #         break
+        model_file_path = os.path.join(root, model_name)
 
         try:
             model_file_path = model_file_path
@@ -108,19 +109,19 @@ def main(args):
             # continue
         model.eval()
 
-        try:
-            model_config = jsonpickle.decode(open(model_config_path, "r").read())
-        except:
-            print("Model {} config is missing, skip to next model".format(model_config_path))
-            continue
+        # try:
+        #     model_config = jsonpickle.decode(open(model_config_path, "r").read())
+        # except:
+        #     print("Model {} config is missing, skip to next model".format(model_config_path))
+        #     continue
 
         if args.gt_by_model_file_name:
             gt = ('target' in os.path.basename(model_file_path))
         elif gt_file:
             with open(args.gt_file, "w") as f:
                 gt = int(f.readlines().strip())
-        else:
-            gt = ('final_triggered_data_n_total' in model_config.keys())
+        # else:
+        #     gt = ('final_triggered_data_n_total' in model_config.keys())
         gt_list.append(gt)
 
         img_c = None
