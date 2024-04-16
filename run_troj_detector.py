@@ -72,87 +72,95 @@ def main(args):
     print(f"model_list: {model_list}")
 
     # --------------------------------- Step I: Feature Extraction ---------------------------------
-    print(">>> Step I: Feature Extraction <<<")
-    gt_list = []
-    fv_list = []
+    if not args.load_exttracted_features:
+        print(">>> Step I: Feature Extraction <<<")
+        gt_list = []
+        fv_list = []
 
-    for j in tqdm(range(len(model_list)), ncols=50, ascii=True):
+        for j in tqdm(range(len(model_list)), ncols=50, ascii=True):
 
-        model_name = model_list[j]
-        model_file_path = []
-        model_config_path = []
-        model_train_example_config = None
-        gt_file = None
+            model_name = model_list[j]
+            model_file_path = []
+            model_config_path = []
+            model_train_example_config = None
+            gt_file = None
 
-        # for root_m, dirnames, filenames in os.walk(os.path.join(root, model_name)):
-        #     for filename in filenames:
-        #         print(f"filename: {filename}")
-        #         if filename.endswith('.pt'):
-        #             model_file_path = os.path.join(root_m, filename)
-        #         if filename.endswith('gt.txt'):
-        #             gt_file = os.path.join(root_m, gt_file)
-        #         if filename.endswith('.json'):
-        #             model_config_path = os.path.join(root_m, filename)
-        #         if filename.endswith('experiment_train.csv'):
-        #             model_train_example_config = os.path.join(root_m, filename)
-        #     if len(model_file_path) and len(model_config_path) and model_train_example_config:
-        #         break
-        model_file_path = os.path.join(root, model_name)
+            # for root_m, dirnames, filenames in os.walk(os.path.join(root, model_name)):
+            #     for filename in filenames:
+            #         print(f"filename: {filename}")
+            #         if filename.endswith('.pt'):
+            #             model_file_path = os.path.join(root_m, filename)
+            #         if filename.endswith('gt.txt'):
+            #             gt_file = os.path.join(root_m, gt_file)
+            #         if filename.endswith('.json'):
+            #             model_config_path = os.path.join(root_m, filename)
+            #         if filename.endswith('experiment_train.csv'):
+            #             model_train_example_config = os.path.join(root_m, filename)
+            #     if len(model_file_path) and len(model_config_path) and model_train_example_config:
+            #         break
+            model_file_path = os.path.join(root, model_name)
 
-        try:
-            model_file_path = model_file_path
-            model = resnet18(num_classes=10)
-            model.load_state_dict(torch.load(model_file_path)["model"])
-            model.to(device)
-        except:
-            print("Model {} file is missing, skip to next model".format(model_file_path))
-            traceback.print_exc()
-            # continue
-        model.eval()
+            try:
+                model_file_path = model_file_path
+                model = resnet18(num_classes=10)
+                model.load_state_dict(torch.load(model_file_path)["model"])
+                model.to(device)
+            except:
+                print("Model {} file is missing, skip to next model".format(model_file_path))
+                traceback.print_exc()
+                # continue
+            model.eval()
 
-        # try:
-        #     model_config = jsonpickle.decode(open(model_config_path, "r").read())
-        # except:
-        #     print("Model {} config is missing, skip to next model".format(model_config_path))
-        #     continue
+            # try:
+            #     model_config = jsonpickle.decode(open(model_config_path, "r").read())
+            # except:
+            #     print("Model {} config is missing, skip to next model".format(model_config_path))
+            #     continue
 
-        if args.gt_by_model_file_name:
-            gt = ('target' in os.path.basename(model_file_path))
-        elif gt_file:
-            with open(args.gt_file, "w") as f:
-                gt = int(f.readlines().strip())
-        # else:
-        #     gt = ('final_triggered_data_n_total' in model_config.keys())
-        gt_list.append(gt)
+            if args.gt_by_model_file_name:
+                gt = ('target' in os.path.basename(model_file_path))
+            elif gt_file:
+                with open(args.gt_file, "w") as f:
+                    gt = int(f.readlines().strip())
+            # else:
+            #     gt = ('final_triggered_data_n_total' in model_config.keys())
+            gt_list.append(gt)
 
-        img_c = None
-        total_examples = 1 # Default to be a blank image if USE_EXAMPLE=False
-        # If use_examples then read in clean input example images
-        if USE_EXAMPLE and os.path.exists(model_train_example_config):
-            img_c = defaultdict(list)
-            example_file = pd.read_csv(model_train_example_config)
-            example_file.sample(frac=1)
-            n_classes = len(example_file['true_label'].unique())
-            for ind in range(example_file.shape[0]):
-                if example_file['triggered'].iloc[ind]:
-                    continue
-                c = example_file['true_label'].iloc[ind]
-                if not len(img_c[c]):
-                    img_file=glob.glob(os.path.join(root, model_name, '**', example_file['file'].iloc[ind]), recursive=True)[0]
-                    img = torch.from_numpy(cv2.imread(img_file, cv2.IMREAD_UNCHANGED)).float()
-                    img_c[c].append(img.permute(2,0,1).unsqueeze(0))
-                total_examples = sum([len(img_c[c]) for c in img_c])
-                if len(img_c.keys()) == n_classes and total_examples == n_classes:
-                    break
+            img_c = None
+            total_examples = 1 # Default to be a blank image if USE_EXAMPLE=False
+            # If use_examples then read in clean input example images
+            if USE_EXAMPLE and os.path.exists(model_train_example_config):
+                img_c = defaultdict(list)
+                example_file = pd.read_csv(model_train_example_config)
+                example_file.sample(frac=1)
+                n_classes = len(example_file['true_label'].unique())
+                for ind in range(example_file.shape[0]):
+                    if example_file['triggered'].iloc[ind]:
+                        continue
+                    c = example_file['true_label'].iloc[ind]
+                    if not len(img_c[c]):
+                        img_file=glob.glob(os.path.join(root, model_name, '**', example_file['file'].iloc[ind]), recursive=True)[0]
+                        img = torch.from_numpy(cv2.imread(img_file, cv2.IMREAD_UNCHANGED)).float()
+                        img_c[c].append(img.permute(2,0,1).unsqueeze(0))
+                    total_examples = sum([len(img_c[c]) for c in img_c])
+                    if len(img_c.keys()) == n_classes and total_examples == n_classes:
+                        break
 
-        model_file_path_prefix = '/'.join(model_file_path.split('/')[:-1])
-        save_file_path = os.path.join(model_file_path_prefix, f'{model_file_path[:-3]}_topo_features.pkl')
-        fv = topo_psf_feature_extract(model, img_c, psf_config)
-        with open(save_file_path, 'wb') as f:
-            pkl.dump(fv, f)
-        f.close()
-        fv_list.append(fv)
-        # fv_list[i]['psf_feature_pos'] shape: 2 * nExample * fh * fw * nStimLevel * nClasses
+            model_file_path_prefix = '/'.join(model_file_path.split('/')[:-1])
+            save_file_path = os.path.join(model_file_path_prefix, f'{model_file_path[:-3]}_topo_features.pkl')
+            fv = topo_psf_feature_extract(model, img_c, psf_config)
+            with open(save_file_path, 'wb') as f:
+                pkl.dump(fv, f)
+            f.close()
+            fv_list.append(fv)
+            # fv_list[i]['psf_feature_pos'] shape: 2 * nExample * fh * fw * nStimLevel * nClasses
+    else:
+        gt_list = []
+        topo_features_models_list = model_list
+        for j in range(topo_features_models_list):
+            topo_features_model_name = topo_features_models_list[j]
+            topo_features_model_file_path = os.path.join(root, topo_features_model_name)
+            gt_list.append('target' in os.path.basename(topo_features_model_file_path))
 
     if args.just_extract_features:
         return 0, 0, 0
@@ -302,6 +310,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, help="Experiment random seed", default=123)
     parser.add_argument('--gt_by_model_file_name', type=bool, help="If true gt will be specified by model file name", default=False)
     parser.add_argument('--just_extract_features', type=bool, help="If true code will just exract model features", default=False)
+    parser.add_argument('--load_exttracted_features', type=bool, help="If true code will use extracted topological model features", default=False)
     args = parser.parse_args()
 
     exp_logfile=date.today().strftime("%d-%m-%Y")+f'{CORR_METRIC}_{CLASSIFIER}_{N_SAMPLE_NEURONS}_{STEP_SIZE}_{STIM_LEVEL}_{PATCH_SIZE}.json'
