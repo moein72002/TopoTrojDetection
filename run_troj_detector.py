@@ -24,6 +24,7 @@ from datetime import date
 from tqdm import tqdm
 import glob
 import traceback
+import pickle
 
 from topological_feature_extractor import topo_psf_feature_extract
 from run_crossval import run_crossval_xgb, run_crossval_mlp
@@ -66,101 +67,129 @@ def main(args):
     psf_config['corr_method'] = CORR_METRIC
     psf_config['device'] = device
 
-    root = args.data_root
-    print(f"root: {root}")
-    model_list = sorted(os.listdir(root))
-    print(f"model_list: {model_list}")
+    # root = args.data_root
+    root_train = args.data_root_train
+    root_test = args.data_root_test
+    # print(f"root: {root}")
+    print(f"root_train: {root_train}")
+    print(f"root_test: {root_test}")
+    # model_list = sorted(os.listdir(root))
+    model_list_train = sorted(os.listdir(root_train))
+    model_list_test = sorted(os.listdir(root_test))
+    # print(f"model_list: {model_list}")
+    print(f"model_list_train: {model_list_train}")
+    print(f"model_list_test: {model_list_test}")
 
     # --------------------------------- Step I: Feature Extraction ---------------------------------
     if not args.load_exttracted_features:
-        print(">>> Step I: Feature Extraction <<<")
-        gt_list = []
-        fv_list = []
-
-        for j in tqdm(range(len(model_list)), ncols=50, ascii=True):
-
-            model_name = model_list[j]
-            model_file_path = []
-            model_config_path = []
-            model_train_example_config = None
-            gt_file = None
-
-            # for root_m, dirnames, filenames in os.walk(os.path.join(root, model_name)):
-            #     for filename in filenames:
-            #         print(f"filename: {filename}")
-            #         if filename.endswith('.pt'):
-            #             model_file_path = os.path.join(root_m, filename)
-            #         if filename.endswith('gt.txt'):
-            #             gt_file = os.path.join(root_m, gt_file)
-            #         if filename.endswith('.json'):
-            #             model_config_path = os.path.join(root_m, filename)
-            #         if filename.endswith('experiment_train.csv'):
-            #             model_train_example_config = os.path.join(root_m, filename)
-            #     if len(model_file_path) and len(model_config_path) and model_train_example_config:
-            #         break
-            model_file_path = os.path.join(root, model_name)
-
-            try:
-                model_file_path = model_file_path
-                model = resnet18(num_classes=10)
-                model.load_state_dict(torch.load(model_file_path)["model"])
-                model.to(device)
-            except:
-                print("Model {} file is missing, skip to next model".format(model_file_path))
-                traceback.print_exc()
-                # continue
-            model.eval()
-
-            # try:
-            #     model_config = jsonpickle.decode(open(model_config_path, "r").read())
-            # except:
-            #     print("Model {} config is missing, skip to next model".format(model_config_path))
-            #     continue
-
-            if args.gt_by_model_file_name:
-                gt = ('target' in os.path.basename(model_file_path))
-            elif gt_file:
-                with open(args.gt_file, "w") as f:
-                    gt = int(f.readlines().strip())
-            # else:
-            #     gt = ('final_triggered_data_n_total' in model_config.keys())
-            gt_list.append(gt)
-
-            img_c = None
-            total_examples = 1 # Default to be a blank image if USE_EXAMPLE=False
-            # If use_examples then read in clean input example images
-            if USE_EXAMPLE and os.path.exists(model_train_example_config):
-                img_c = defaultdict(list)
-                example_file = pd.read_csv(model_train_example_config)
-                example_file.sample(frac=1)
-                n_classes = len(example_file['true_label'].unique())
-                for ind in range(example_file.shape[0]):
-                    if example_file['triggered'].iloc[ind]:
-                        continue
-                    c = example_file['true_label'].iloc[ind]
-                    if not len(img_c[c]):
-                        img_file=glob.glob(os.path.join(root, model_name, '**', example_file['file'].iloc[ind]), recursive=True)[0]
-                        img = torch.from_numpy(cv2.imread(img_file, cv2.IMREAD_UNCHANGED)).float()
-                        img_c[c].append(img.permute(2,0,1).unsqueeze(0))
-                    total_examples = sum([len(img_c[c]) for c in img_c])
-                    if len(img_c.keys()) == n_classes and total_examples == n_classes:
-                        break
-
-            model_file_path_prefix = '/'.join(model_file_path.split('/')[:-1])
-            save_file_path = os.path.join(model_file_path_prefix, f'{model_file_path[:-3]}_topo_features.pkl')
-            fv = topo_psf_feature_extract(model, img_c, psf_config)
-            with open(save_file_path, 'wb') as f:
-                pkl.dump(fv, f)
-            f.close()
-            fv_list.append(fv)
-            # fv_list[i]['psf_feature_pos'] shape: 2 * nExample * fh * fw * nStimLevel * nClasses
+        pass
+        # print(">>> Step I: Feature Extraction <<<")
+        # gt_list = []
+        # fv_list = []
+        #
+        # for j in tqdm(range(len(model_list)), ncols=50, ascii=True):
+        #
+        #     model_name = model_list[j]
+        #     model_file_path = []
+        #     model_config_path = []
+        #     model_train_example_config = None
+        #     gt_file = None
+        #
+        #     # for root_m, dirnames, filenames in os.walk(os.path.join(root, model_name)):
+        #     #     for filename in filenames:
+        #     #         print(f"filename: {filename}")
+        #     #         if filename.endswith('.pt'):
+        #     #             model_file_path = os.path.join(root_m, filename)
+        #     #         if filename.endswith('gt.txt'):
+        #     #             gt_file = os.path.join(root_m, gt_file)
+        #     #         if filename.endswith('.json'):
+        #     #             model_config_path = os.path.join(root_m, filename)
+        #     #         if filename.endswith('experiment_train.csv'):
+        #     #             model_train_example_config = os.path.join(root_m, filename)
+        #     #     if len(model_file_path) and len(model_config_path) and model_train_example_config:
+        #     #         break
+        #     model_file_path = os.path.join(root, model_name)
+        #
+        #     try:
+        #         model_file_path = model_file_path
+        #         model = resnet18(num_classes=10)
+        #         model.load_state_dict(torch.load(model_file_path)["model"])
+        #         model.to(device)
+        #     except:
+        #         print("Model {} file is missing, skip to next model".format(model_file_path))
+        #         traceback.print_exc()
+        #         # continue
+        #     model.eval()
+        #
+        #     # try:
+        #     #     model_config = jsonpickle.decode(open(model_config_path, "r").read())
+        #     # except:
+        #     #     print("Model {} config is missing, skip to next model".format(model_config_path))
+        #     #     continue
+        #
+        #     if args.gt_by_model_file_name:
+        #         gt = ('target' in os.path.basename(model_file_path))
+        #     elif gt_file:
+        #         with open(args.gt_file, "w") as f:
+        #             gt = int(f.readlines().strip())
+        #     # else:
+        #     #     gt = ('final_triggered_data_n_total' in model_config.keys())
+        #     gt_list.append(gt)
+        #
+        #     img_c = None
+        #     total_examples = 1 # Default to be a blank image if USE_EXAMPLE=False
+        #     # If use_examples then read in clean input example images
+        #     if USE_EXAMPLE and os.path.exists(model_train_example_config):
+        #         img_c = defaultdict(list)
+        #         example_file = pd.read_csv(model_train_example_config)
+        #         example_file.sample(frac=1)
+        #         n_classes = len(example_file['true_label'].unique())
+        #         for ind in range(example_file.shape[0]):
+        #             if example_file['triggered'].iloc[ind]:
+        #                 continue
+        #             c = example_file['true_label'].iloc[ind]
+        #             if not len(img_c[c]):
+        #                 img_file=glob.glob(os.path.join(root, model_name, '**', example_file['file'].iloc[ind]), recursive=True)[0]
+        #                 img = torch.from_numpy(cv2.imread(img_file, cv2.IMREAD_UNCHANGED)).float()
+        #                 img_c[c].append(img.permute(2,0,1).unsqueeze(0))
+        #             total_examples = sum([len(img_c[c]) for c in img_c])
+        #             if len(img_c.keys()) == n_classes and total_examples == n_classes:
+        #                 break
+        #
+        #     model_file_path_prefix = '/'.join(model_file_path.split('/')[:-1])
+        #     save_file_path = os.path.join(model_file_path_prefix, f'{model_file_path[:-3]}_topo_features.pkl')
+        #     fv = topo_psf_feature_extract(model, img_c, psf_config)
+        #     with open(save_file_path, 'wb') as f:
+        #         pkl.dump(fv, f)
+        #     f.close()
+        #     fv_list.append(fv)
+        #     # fv_list[i]['psf_feature_pos'] shape: 2 * nExample * fh * fw * nStimLevel * nClasses
     else:
-        gt_list = []
-        topo_features_models_list = model_list
-        for j in range(topo_features_models_list):
-            topo_features_model_name = topo_features_models_list[j]
-            topo_features_model_file_path = os.path.join(root, topo_features_model_name)
-            gt_list.append('target' in os.path.basename(topo_features_model_file_path))
+        gt_list_train = []
+        gt_list_test = []
+        fv_list_train = []
+        fv_list_test = []
+        topo_features_models_list_train = model_list_train
+        for j in range(len(topo_features_models_list_train)):
+            topo_features_model_name = topo_features_models_list_train[j]
+            if topo_features_model_name.endswith('.pkl'):
+                topo_features_model_file_path = os.path.join(root_train, topo_features_model_name)
+                if 'train' in topo_features_model_file_path:
+                    gt_list_train.append('target' in os.path.basename(topo_features_model_file_path))
+                    with open(topo_features_model_file_path, 'rb') as file:
+                        data = pickle.load(file)
+                        fv_list_train.append(data)
+
+        topo_features_models_list_test = model_list_test
+        for j in range(len(topo_features_models_list_test)):
+            topo_features_model_name = topo_features_models_list_test[j]
+            if topo_features_model_name.endswith('.pkl'):
+                topo_features_model_file_path = os.path.join(root_test, topo_features_model_name)
+                if 'test' in topo_features_model_file_path:
+                    gt_list_test.append('target' in os.path.basename(topo_features_model_file_path))
+                    with open(topo_features_model_file_path, 'rb') as file:
+                        data = pickle.load(file)
+                        fv_list_test.append(data)
 
     if args.just_extract_features:
         return 0, 0, 0
@@ -177,32 +206,47 @@ def main(args):
             #   h: height of the feature map
             #   L: number of stimulation levels
             #   C: number of classes
-            psf_feature=torch.cat([fv_list[i]['psf_feature_pos'].unsqueeze(0) for i in range(len(fv_list))])
+            psf_feature_train=torch.cat([fv_list_train[i]['psf_feature_pos'].unsqueeze(0) for i in range(len(fv_list_train))])
+            psf_feature_test=torch.cat([fv_list_test[i]['psf_feature_pos'].unsqueeze(0) for i in range(len(fv_list_test))])
             # TOPO feature shape = N*12 where 12 is the total number of topological feature from dim0 and dim1
-            topo_feature = torch.cat([fv_list[i]['topo_feature_pos'].unsqueeze(0) for i in range(len(fv_list))])
+            topo_feature_train = torch.cat([fv_list_train[i]['topo_feature_pos'].unsqueeze(0) for i in range(len(fv_list_train))])
+            topo_feature_test = torch.cat([fv_list_test[i]['topo_feature_pos'].unsqueeze(0) for i in range(len(fv_list_test))])
 
-            topo_feature[np.where(topo_feature==np.Inf)]=1
-            n, _, nEx, fnW, fnH, nStim, C = psf_feature.shape
-            psf_feature_dat=psf_feature.reshape(n, 2, -1, nStim, C)
-            psf_diff_max=(psf_feature_dat.max(dim=3)[0]-psf_feature_dat.min(dim=3)[0]).max(2)[0].view(len(gt_list), -1)
-            psf_med_max=psf_feature_dat.median(dim=3)[0].max(2)[0].view(len(gt_list), -1)
-            psf_std_max=psf_feature_dat.std(dim=3).max(2)[0].view(len(gt_list), -1)
-            psf_topk_max=psf_feature_dat.topk(k=min(3, total_examples), dim=3)[0].mean(2).max(2)[0].view(len(gt_list), -1)
-            psf_feature_dat=torch.cat([psf_diff_max, psf_med_max, psf_std_max, psf_topk_max], dim=1)
+            topo_feature_train[np.where(topo_feature_train==np.Inf)]=1
+            topo_feature_test[np.where(topo_feature_test==np.Inf)]=1
+            n_train, _, nEx_train, fnW_train, fnH_train, nStim_train, C_train = psf_feature_train.shape
+            n_test, _, nEx_test, fnW_test, fnH_test, nStim_test, C_test = psf_feature_test.shape
+            psf_feature_dat_train=psf_feature_train.reshape(n_train, 2, -1, nStim_train, C_train)
+            psf_feature_dat_test=psf_feature_test.reshape(n_test, 2, -1, nStim_test, C_test)
+            psf_diff_max_train=(psf_feature_dat_train.max(dim=3)[0]-psf_feature_dat_train.min(dim=3)[0]).max(2)[0].view(len(gt_list_train), -1)
+            psf_diff_max_test=(psf_feature_dat_test.max(dim=3)[0]-psf_feature_dat_test.min(dim=3)[0]).max(2)[0].view(len(gt_list_test), -1)
+            psf_med_max_train=psf_feature_dat_train.median(dim=3)[0].max(2)[0].view(len(gt_list_train), -1)
+            psf_med_max_test=psf_feature_dat_test.median(dim=3)[0].max(2)[0].view(len(gt_list_test), -1)
+            psf_std_max_train=psf_feature_dat_train.std(dim=3).max(2)[0].view(len(gt_list_train), -1)
+            psf_std_max_test=psf_feature_dat_test.std(dim=3).max(2)[0].view(len(gt_list_test), -1)
+            total_examples_train = 1
+            total_examples_test = 1
+            psf_topk_max_train=psf_feature_dat_train.topk(k=min(3, total_examples_train), dim=3)[0].mean(2).max(2)[0].view(len(gt_list_train), -1)
+            psf_topk_max_test=psf_feature_dat_test.topk(k=min(3, total_examples_test), dim=3)[0].mean(2).max(2)[0].view(len(gt_list_test), -1)
+            psf_feature_dat_train=torch.cat([psf_diff_max_train, psf_med_max_train, psf_std_max_train, psf_topk_max_train], dim=1)
+            psf_feature_dat_test=torch.cat([psf_diff_max_test, psf_med_max_test, psf_std_max_test, psf_topk_max_test], dim=1)
 
             # dat=torch.cat([psf_feature_dat, topo_feature.view(topo_feature.shape[0], -1)], dim=1)
-            dat = topo_feature.view(topo_feature.shape[0], -1)
-            dat=preprocessing.scale(dat)
-            gt_list=torch.tensor(gt_list)
+            dat_train = topo_feature_train.view(topo_feature_train.shape[0], -1)
+            dat_test = topo_feature_test.view(topo_feature_test.shape[0], -1)
+            dat_train=preprocessing.scale(dat_train)
+            dat_test=preprocessing.scale(dat_test)
+            gt_list_train=torch.tensor(gt_list_train)
+            gt_list_test=torch.tensor(gt_list_test)
 
-            N = len(gt_list)
-            n_train = int(TRAIN_TEST_SPLIT * N)
-            ind_reshuffle = np.random.choice(list(range(N)), N, replace=False)
-            train_ind = ind_reshuffle[:n_train]
-            test_ind = ind_reshuffle[n_train:]
+            # N = len(gt_list)
+            # n_train = int(TRAIN_TEST_SPLIT * N)
+            # ind_reshuffle = np.random.choice(list(range(N)), N, replace=False)
+            # train_ind = ind_reshuffle[:n_train]
+            # test_ind = ind_reshuffle[n_train:]
 
-            feature_train, feature_test = dat[train_ind], dat[test_ind]
-            gt_train, gt_test = gt_list[train_ind], gt_list[test_ind]
+            feature_train, feature_test = dat_train, dat_test
+            gt_train, gt_test = gt_list_train, gt_list_test
 
             # Run the training and hyper-parameter searching process
             print('Running hyper-parameter searching and training')
@@ -225,69 +269,69 @@ def main(args):
             ce_test = np.sum(-(labels * np.log(y_pred) + (1 - labels) * np.log(1 - y_pred))) / len(y_pred)
 
 
-        if CLASSIFIER=='mlp':
-            dat=[]
-            for i in range(len(fv_list)):
-                psf_fv_pos_i=fv_list[i]['psf_feature_pos']
-                _, nEx, fh, fw, nSim, C = psf_fv_pos_i.shape
-                psf_fv_pos_i=psf_fv_pos_i.permute(5, 0, 1, 2, 3, 4)
-                psf_fv_pos_i=psf_fv_pos_i.reshape(C, -1)
-                topo_fv_pos_i=fv_list[i]['topo_feature_pos'].view(nEx, -1)
-                dat_pos_i={'psf_fv_pos_i':psf_fv_pos_i, 'topo_fv_pos_i':topo_fv_pos_i}
-                dat.append(dat_pos_i)
-
-            N = len(dat)
-            n_train = int(TRAIN_TEST_SPLIT * N)
-            ind_reshuffle = np.random.choice(list(range(N)), N, replace=False)
-            train_ind = ind_reshuffle[:n_train]
-            test_ind = ind_reshuffle[n_train:]
-
-            feature_train = [dat[i] for i in train_ind]
-            feature_test = [dat[i] for i in test_ind]
-            gt_train = [gt_list[i] for i in train_ind]
-            gt_test = [gt_list[i] for i in test_ind]
-
-            # Run the training and hyper-parameter searching process
-            print('Running hyper-parameter searching and training')
-            best_model_list = run_crossval_mlp(feature_train, gt_train)
-
-            # Evaluation
-            output_mv=torch.zeros(len(feature_test), 2).cuda()
-            for i in range(len(best_model_list['models'])):
-                psf_encoder, topo_encoder, cls = best_model_list['models'][i]
-                weight = best_model_list['weight'][i]/sum(best_model_list['weight'])
-
-                psf_encoder.eval()
-                topo_encoder.eval()
-                cls.eval()
-                correct = 0
-                total = 0
-                for j in range(0, max(int((len(feature_test) - 1) / 32), 1)):
-                    batch = feature_test[(32*j):min(32*(j+1), len(feature_test))] # 32 is the batch size
-                    embedding_list = []
-                    for single_input in batch:
-                        psf_fv_pos_i=single_input['psf_fv_pos_i'].cuda()
-                        topo_fv_pos_i=single_input['topo_fv_pos_i'].cuda()
-                        psf_embedding=psf_encoder(psf_fv_pos_i)
-                        # Tricks to handle single data point batch. Repeat this data point 5 times and add some Gaussian noise
-                        if len(topo_fv_pos_i)==1:
-                            topo_fv_pos_i=topo_fv_pos_i.repeat(5, 1)+torch.randn(5, topo_fv_pos_i.shape[1]).cuda()
-                        topo_embedding=topo_encoder(topo_fv_pos_i)
-                        embedding=torch.cat([psf_embedding.mean(0).flatten(), topo_embedding.mean(0).flatten()])
-                        embedding_list.append(embedding)
-                    embeddings = torch.cat([x.unsqueeze(0) for x in embedding_list])
-                    output = cls(embeddings)
-                    output_mv[(32*j):min(32*(j+1), len(feature_test))]+=output*weight
-
-            gt_test=torch.tensor(gt_test)
-            output=output_mv
-            score=torch.nn.functional.softmax(output, 1).detach().cpu()
-            pred = score.argmax(1)
-            correct += pred.eq(gt_test).sum().item()
-            total += len(gt_test)
-            acc_test = correct / total
-            auc_test = roc_auc_score(gt_test.detach().cpu().numpy(), score[:, 1].numpy())
-            ce_test = -np.mean(np.array(gt_test)*np.log(np.maximum(score[:,1].numpy(), 1e-4))+(1-np.array(gt_test))*np.log(np.maximum(1-score[:,1].numpy(), 1e-4)))
+        # if CLASSIFIER=='mlp':
+        #     dat=[]
+        #     for i in range(len(fv_list)):
+        #         psf_fv_pos_i=fv_list[i]['psf_feature_pos']
+        #         _, nEx, fh, fw, nSim, C = psf_fv_pos_i.shape
+        #         psf_fv_pos_i=psf_fv_pos_i.permute(5, 0, 1, 2, 3, 4)
+        #         psf_fv_pos_i=psf_fv_pos_i.reshape(C, -1)
+        #         topo_fv_pos_i=fv_list[i]['topo_feature_pos'].view(nEx, -1)
+        #         dat_pos_i={'psf_fv_pos_i':psf_fv_pos_i, 'topo_fv_pos_i':topo_fv_pos_i}
+        #         dat.append(dat_pos_i)
+        #
+        #     N = len(dat)
+        #     n_train = int(TRAIN_TEST_SPLIT * N)
+        #     ind_reshuffle = np.random.choice(list(range(N)), N, replace=False)
+        #     train_ind = ind_reshuffle[:n_train]
+        #     test_ind = ind_reshuffle[n_train:]
+        #
+        #     feature_train = [dat[i] for i in train_ind]
+        #     feature_test = [dat[i] for i in test_ind]
+        #     gt_train = [gt_list[i] for i in train_ind]
+        #     gt_test = [gt_list[i] for i in test_ind]
+        #
+        #     # Run the training and hyper-parameter searching process
+        #     print('Running hyper-parameter searching and training')
+        #     best_model_list = run_crossval_mlp(feature_train, gt_train)
+        #
+        #     # Evaluation
+        #     output_mv=torch.zeros(len(feature_test), 2).cuda()
+        #     for i in range(len(best_model_list['models'])):
+        #         psf_encoder, topo_encoder, cls = best_model_list['models'][i]
+        #         weight = best_model_list['weight'][i]/sum(best_model_list['weight'])
+        #
+        #         psf_encoder.eval()
+        #         topo_encoder.eval()
+        #         cls.eval()
+        #         correct = 0
+        #         total = 0
+        #         for j in range(0, max(int((len(feature_test) - 1) / 32), 1)):
+        #             batch = feature_test[(32*j):min(32*(j+1), len(feature_test))] # 32 is the batch size
+        #             embedding_list = []
+        #             for single_input in batch:
+        #                 psf_fv_pos_i=single_input['psf_fv_pos_i'].cuda()
+        #                 topo_fv_pos_i=single_input['topo_fv_pos_i'].cuda()
+        #                 psf_embedding=psf_encoder(psf_fv_pos_i)
+        #                 # Tricks to handle single data point batch. Repeat this data point 5 times and add some Gaussian noise
+        #                 if len(topo_fv_pos_i)==1:
+        #                     topo_fv_pos_i=topo_fv_pos_i.repeat(5, 1)+torch.randn(5, topo_fv_pos_i.shape[1]).cuda()
+        #                 topo_embedding=topo_encoder(topo_fv_pos_i)
+        #                 embedding=torch.cat([psf_embedding.mean(0).flatten(), topo_embedding.mean(0).flatten()])
+        #                 embedding_list.append(embedding)
+        #             embeddings = torch.cat([x.unsqueeze(0) for x in embedding_list])
+        #             output = cls(embeddings)
+        #             output_mv[(32*j):min(32*(j+1), len(feature_test))]+=output*weight
+        #
+        #     gt_test=torch.tensor(gt_test)
+        #     output=output_mv
+        #     score=torch.nn.functional.softmax(output, 1).detach().cpu()
+        #     pred = score.argmax(1)
+        #     correct += pred.eq(gt_test).sum().item()
+        #     total += len(gt_test)
+        #     acc_test = correct / total
+        #     auc_test = roc_auc_score(gt_test.detach().cpu().numpy(), score[:, 1].numpy())
+        #     ce_test = -np.mean(np.array(gt_test)*np.log(np.maximum(score[:,1].numpy(), 1e-4))+(1-np.array(gt_test))*np.log(np.maximum(1-score[:,1].numpy(), 1e-4)))
 
         logger_name=date.today().strftime("%d-%m-%Y")+'_synthetic_'+"-".join([str(x) for x in psf_config['input_shape']])
         logger_file=os.path.join(args.log_path, logger_name)
@@ -304,7 +348,9 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Extract feature and train trojan detector for synthetic experiment')
-    parser.add_argument('--data_root', type=str, help='Root folder that saves the experiment models')
+    # parser.add_argument('--data_root', type=str, help='Root folder that saves the experiment models')
+    parser.add_argument('--data_root_train', type=str, help='Root folder that saves the experiment models')
+    parser.add_argument('--data_root_test', type=str, help='Root folder that saves the experiment models')
     parser.add_argument('--log_path', type=str, help='Output log save dir', default='./tmp')
     parser.add_argument('--gpu_ind', type=str, help='Indices of GPUs to be used', default='0')
     parser.add_argument('--seed', type=int, help="Experiment random seed", default=123)
